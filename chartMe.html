@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Generator</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Chart Generator</h1>
+        <form id="chartForm">
+            <div class="form-group">
+                <label for="xValues">X Values (comma-separated)</label>
+                <input type="text" class="form-control" id="xValues" placeholder="Enter x values">
+            </div>
+            <div class="form-group">
+                <label for="yValues">Y Values (comma-separated)</label>
+                <input type="text" class="form-control" id="yValues" placeholder="Enter y values">
+            </div>
+            <div class="form-group">
+                <label for="chartType">Select Chart Type</label>
+                <select class="form-control" id="chartType">
+                    <option value="line">Line</option>
+                    <option value="scatter">Scatter</option>
+                    <option value="bar">Bar</option>
+                    <option value="pie">Pie</option>
+                    <option value="doughnut">Doughnut</option>
+                    <option value="bubble">Bubble</option>
+                    <option value="area">Area</option>
+                    <option value="radar">Radar</option>
+                    <option value="mix">Mixed</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Generate Chart</button>
+        </form>
+        <canvas id="myChart" class="mt-5" style="width:100%;max-width:700px;"></canvas>
+    </div>
+
+    <script>
+        document.getElementById('chartForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const xValues = document.getElementById('xValues').value.split(',').map(val => isNaN(val) ? val : Number(val));
+            const yValues = document.getElementById('yValues').value.split(',').map(Number);
+            const chartType = document.getElementById('chartType').value;
+            generateChart(xValues, yValues, chartType);
+        });
+
+        function generateChart(xValues, yValues, chartType) {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            if (window.myChartInstance) {
+                window.myChartInstance.destroy();
+            }
+
+            let data = {};
+            let options = {};
+
+            switch(chartType) {
+                case 'scatter':
+                    data = {
+                        datasets: [{
+                            pointRadius: 4,
+                            pointBackgroundColor: "rgb(0,0,255)",
+                            data: xValues.map((x, index) => ({ x, y: yValues[index] }))
+                        }]
+                    };
+                    options = {
+                        scales: {
+                            x: { beginAtZero: true },
+                            y: { beginAtZero: true }
+                        }
+                    };
+                    break;
+                case 'pie':
+                case 'doughnut':
+                    data = {
+                        labels: xValues.map(String),
+                        datasets: [{
+                            backgroundColor: ["red", "green", "blue", "orange", "purple", "yellow"],
+                            data: yValues
+                        }]
+                    };
+                    break;
+                case 'bubble':
+                    data = {
+                        datasets: [{
+                            label: 'Bubble Dataset',
+                            data: xValues.map((x, index) => ({ x, y: yValues[index], r: yValues[index] })),
+                            backgroundColor: 'rgba(0, 0, 255, 0.5)'
+                        }]
+                    };
+                    options = {
+                        scales: {
+                            x: { beginAtZero: true },
+                            y: { beginAtZero: true }
+                        }
+                    };
+                    break;
+                case 'radar':
+                    data = {
+                        labels: xValues.map(String),
+                        datasets: [{
+                            label: 'Radar Dataset',
+                            data: yValues,
+                            backgroundColor: 'rgba(0, 0, 255, 0.2)',
+                            borderColor: 'rgba(0, 0, 255, 1)',
+                            pointBackgroundColor: 'rgba(0, 0, 255, 1)'
+                        }]
+                    };
+                    break;
+                case 'area':
+                    data = {
+                        labels: xValues,
+                        datasets: [{
+                            label: 'Area Dataset',
+                            data: yValues,
+                            backgroundColor: 'rgba(0, 0, 255, 0.5)',
+                            borderColor: 'rgba(0, 0, 255, 1)',
+                            fill: true
+                        }]
+                    };
+                    break;
+                case 'mix':
+                    data = {
+                        labels: xValues.map(String),
+                        datasets: [{
+                            type: 'line',
+                            label: 'Line Dataset',
+                            data: yValues,
+                            borderColor: 'rgba(0, 0, 255, 1)',
+                            fill: false
+                        }, {
+                            type: 'bar',
+                            label: 'Bar Dataset',
+                            data: yValues.map(y => y + 10), 
+                            backgroundColor: 'rgba(255, 0, 0, 0.5)',
+                            borderColor: 'rgba(255, 0, 0, 1)'
+                        }]
+                    };
+                    options = {
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    };
+                    break;
+                default:
+                    data = {
+                        labels: xValues,
+                        datasets: [{
+                            fill: false,
+                            lineTension: 0,
+                            backgroundColor: "rgba(0,0,255,1.0)",
+                            borderColor: "rgba(0,0,255,0.1)",
+                            data: yValues
+                        }]
+                    };
+                    options = {
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    };
+            }
+
+            window.myChartInstance = new Chart(ctx, {
+                type: chartType === 'area' ? 'line' : chartType,
+                data: data,
+                options: {
+                    legend: { display: chartType !== 'line' },
+                    ...options
+                }
+            });
+        }
+    </script>
+</body>
+</html>
